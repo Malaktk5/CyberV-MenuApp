@@ -2,7 +2,7 @@
 
 **Thème 15 :** Commandes de restaurant
 
-**Équipe :** CyberV (Zemmour Sihame, Moad Kenza, Saadi Ameterrahmane, Touafek Malak)
+**Équipe :** CyberV (Zemmour Sihame, Moad Kenza, Saadi Ameterrahmane, Touafek Malak, Redjradj Nicette)
 
 ---
 
