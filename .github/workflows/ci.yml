@@ -1,0 +1,26 @@
+name: CI CyberV Yummy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Démarrer PostgreSQL
+        run: |
+          sudo systemctl start postgresql.service
+          for i in $(seq 1 30); do pg_isready -h localhost -p 5432 && break; sleep 1; done
+
+      - name: Créer BDD et charger Schema
+        run: |
+          sudo -u postgres psql -c "CREATE USER yummy_user WITH PASSWORD 'yummy_password';"
+          sudo -u postgres psql -c "CREATE DATABASE yummy_db OWNER yummy_user;"
+          if [ -f db/schema.sql ]; then
+            PGPASSWORD=yummy_password psql -h localhost -U yummy_user -d yummy_db -f db/schema.sql
+          fi
