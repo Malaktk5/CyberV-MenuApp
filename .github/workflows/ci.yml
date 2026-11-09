@@ -7,20 +7,24 @@ on:
     branches: [ main ]
 
 jobs:
-  test-db:
+  test-backend:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Démarrer PostgreSQL
-        run: |
-          sudo systemctl start postgresql.service
-          for i in $(seq 1 30); do pg_isready -h localhost -p 5432 && break; sleep 1; done
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: Créer BDD et charger Schema
+      - name: Install dependencies
         run: |
-          sudo -u postgres psql -c "CREATE USER yummy_user WITH PASSWORD 'yummy_password';"
-          sudo -u postgres psql -c "CREATE DATABASE yummy_db OWNER yummy_user;"
-          if [ -f db/schema.sql ]; then
-            PGPASSWORD=yummy_password psql -h localhost -U yummy_user -d yummy_db -f db/schema.sql
-          fi
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx
+
+      - name: Run Python tests
+        run: |
+          pytest
