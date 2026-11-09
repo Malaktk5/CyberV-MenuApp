@@ -36,3 +36,41 @@ Plat, Catégorie, Option, Menu, Table, Commande, Ligne de commande, Paiement, St
 
 ### Spécificités DevOps
 Le thème se prête à un test de charge qui simule un coup de feu, et à l'observabilité (temps de réponse, nombre de commandes en cours) ; un déploiement avec redémarrage progressif évite d'interrompre le service pendant les repas.
+
+---
+
+### Lancer le projet en local (Docker)
+
+**Prérequis :** Docker avec Docker Compose installé.
+
+**1. Cloner le dépôt**
+
+    git clone https://github.com/Malaktk5/CyberV-MenuApp.git
+    cd CyberV-MenuApp
+
+**2. Construire et démarrer tous les services**
+
+    docker compose up --build -d
+
+Cette commande démarre 3 conteneurs : l'application FastAPI, PostgreSQL et Redis.
+
+**3. Vérifier que tout tourne**
+
+    docker compose ps
+    curl http://localhost:8000/health
+
+La deuxième commande doit répondre `{"status":"OK"}`. 
+
+**4. Arrêter les services**
+
+    docker compose down
+
+**Ports utilises**
+
+| Service | Adresse |
+|---|---|
+| API FastAPI | localhost:8000 |
+| PostgreSQL | localhost:5433 |
+| Redis | localhost:6380 |
+
+the ports used in this configuration are different than the default ports to avoid any conflict if theres instances of redis/postgres in the ports already
