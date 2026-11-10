@@ -10,6 +10,21 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: yummy_db
+          POSTGRES_USER: yummy_user
+          POSTGRES_PASSWORD: yummy_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,10 +38,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest httpx
+
+      - name: Load database schema
+        env:
+          PGPASSWORD: yummy_password
+        run: |
+          psql -h localhost -U yummy_user -d yummy_db -f db/init.sql
 
       - name: Run Python tests
         env:
           PYTHONPATH: .
+          DATABASE_URL: postgresql://yummy_user:yummy_password@localhost:5432/yummy_db
         run: |
           python -m pytest
