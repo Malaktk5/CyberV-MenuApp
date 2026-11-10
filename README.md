@@ -74,3 +74,23 @@ La deuxième commande doit répondre `{"status":"OK"}`.
 | Redis | localhost:6380 |
 
 the ports used in this configuration are different than the default ports to avoid any conflict if theres instances of redis/postgres in the ports already
+
+## Configuration des variables d'environnement & Docker
+
+### 1. Variables d'environnement (`.env` vs `.env.example`)
+* **`.env.example`** : Sert uniquement de modèle de démonstration pour l'équipe. Il indique la structure des variables requises sans contenir de secrets.
+* **`.env`** : Fichier réel utilisé par `docker-compose.yml`. Contient vos identifiants réels (comme `POSTGRES_PASSWORD`).
+* **Sécurité** : Le fichier `.env` est exclu du contrôle de version via `.gitignore` et ne doit jamais être commité.
+* **Résolution des variables** : Dans `docker-compose.yml`, les expressions comme `${POSTGRES_PASSWORD}` lisent directement les valeurs définies dans votre fichier `.env` local.
+
+### 2. Réinitialisation des conteneurs et des images Docker
+Si les conteneurs ont été créés avant l'ajout de la base de données ou la modification du fichier `db/init.sql`, Docker continuera d'utiliser les anciennes images et volumes en cache.
+
+Pour repartir de zéro avec un environnement propre, exécutez :
+
+```bash
+# Arrêter les conteneurs et supprimer les volumes de données existants
+docker compose down -v
+
+# Reconstruire les images sans utiliser le cache et démarrer les services
+docker compose up -d --build
