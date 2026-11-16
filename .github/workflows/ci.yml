@@ -25,6 +25,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,11 +53,18 @@ jobs:
         env:
           PGPASSWORD: yummy_password
         run: |
-          psql -h localhost -U yummy_user -d yummy_db -f db/init.sql
+          psql -v ON_ERROR_STOP=1 -h localhost -U yummy_user -d yummy_db -f db/init.sql
+
+      - name: Check Redis connection
+        env:
+          REDIS_URL: redis://localhost:6379
+        run: |
+          python -c "import os, redis; r = redis.from_url(os.environ['REDIS_URL']); assert r.ping(); print('Redis OK')"
 
       - name: Run Python tests
         env:
           PYTHONPATH: .
           DATABASE_URL: postgresql://yummy_user:yummy_password@localhost:5432/yummy_db
+          REDIS_URL: redis://localhost:6379
         run: |
           python -m pytest
