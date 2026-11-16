@@ -4,10 +4,11 @@ import psycopg2
 from fastapi import FastAPI, Response, status
 from fastapi.staticfiles import StaticFiles
 from app import config
-from app.routers import admin, auth, commandes, public
+from app.routers import admin, auth, commandes, public, ws
 from app.seed import bootstrap
 
 
+# Handles application startup and shutdown lifecycle events (e.g., seeding initial database data)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="CyberV Yummy API", lifespan=lifespan)
 
 
+# Health check endpoint that verifies the API is running and can connect to PostgreSQL
 @app.get("/health")
 def health_check(response: Response):
     db_url = os.getenv("DATABASE_URL", "postgresql://yummy_user:yummy_password@db:5432/yummy_db")
@@ -37,6 +39,7 @@ app.include_router(public.router)
 app.include_router(commandes.router)
 app.include_router(admin.router)
 app.include_router(admin.staff)
+app.include_router(ws.router)
 
 config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=config.UPLOAD_DIR), name="uploads")
