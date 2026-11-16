@@ -1,0 +1,17 @@
+:root{--gold:#e4b95b;--gold-d:#d4a356;--gold-dd:#a9781f;--gold-l:#f0e1c2;--gold-xl:#fbf4de;--ink:#222;--muted:#6b6b6b;--line:#eadbab;--danger:#c0392b;--shadow:2px 2px 10px rgba(0,0,0,.1)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:#fff;color:var(--ink);font:500 1rem/1.6 'Quicksand',sans-serif}
+h1,h2,h3,h4{font-weight:700;margin:.2em 0;line-height:1.25}b,strong,th,label{font-weight:700}a{color:var(--gold-dd);font-weight:700}
+button,.btn{display:inline-block;background:var(--gold);color:#fff;border:none;padding:.65rem 1.1rem;border-radius:6px;font:700 .95rem 'Quicksand',sans-serif;cursor:pointer;text-decoration:none;transition:.15s}
+button:hover,.btn:hover{background:var(--gold-d)}
+button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}button.ghost:hover{background:var(--gold-xl)}
+button.danger{background:#fff;color:var(--danger);border:1px solid #e3b4ad}button.danger:hover{background:var(--danger);color:#fff}
+button.sm{padding:.4rem .75rem;font-size:.82rem}
+input,select,textarea{width:100%;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.6rem .8rem;font:500 1rem 'Quicksand',sans-serif;outline:0}
+input:focus,select:focus,textarea:focus{border-color:var(--gold-d);box-shadow:0 0 0 3px var(--gold-xl)}textarea{min-height:80px;resize:vertical}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--gold-d);cursor:pointer;flex:none}
+.tag{display:inline-block;background:var(--gold-l);color:var(--ink);padding:2px 10px;border-radius:20px;font:700 .75rem 'Quicksand'}
+.title-line{width:96px;height:4px;background:linear-gradient(to right,#e4b95b,#d4a356);margin:0 auto}
+.muted{color:var(--muted)}.err{color:var(--danger);font-weight:700}
+#toast{position:fixed;right:1rem;bottom:1rem;display:flex;flex-direction:column;gap:.5rem;z-index:99}
+#toast div{background:var(--ink);color:#fff;padding:.8rem 1.2rem;border-radius:8px;font-weight:700;border-left:5px solid var(--gold)}#toast .err{border-left-color:var(--danger);color:#fff}
