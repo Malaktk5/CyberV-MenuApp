@@ -1,8 +1,10 @@
 import os
 import psycopg2
 from fastapi import FastAPI, Response, status
+from app.routers import ws
 
 app = FastAPI(title="CyberV Yummy API")
+app.include_router(ws.router)
 
 @app.get("/health")
 def health_check(response: Response):
