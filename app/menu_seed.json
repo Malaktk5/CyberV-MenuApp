@@ -1,0 +1,184 @@
+[
+ {
+  "categorie": "Entrées",
+  "nom": "Salade César",
+  "description": "Salade fraîche et des legumes avec poulet grillé.",
+  "prix": 400,
+  "photo_url": "/assets/img/menu/1.jpg"
+ },
+ {
+  "categorie": "Entrées",
+  "nom": "Salade composée de saison",
+  "description": "Salade fraîche avec des legumes de saison.",
+  "prix": 400,
+  "photo_url": "/assets/img/menu/2.jpg"
+ },
+ {
+  "categorie": "Entrées",
+  "nom": "Soupe chorba algérienne",
+  "description": "Une soupe traditionnelle parfumée aux épices.",
+  "prix": 350,
+  "photo_url": "/assets/img/menu/3.jpg"
+ },
+ {
+  "categorie": "Entrées",
+  "nom": "Soupe de poisson",
+  "description": "Un délicieux bouillon de la mer.Avec meilleur poissons",
+  "prix": 450,
+  "photo_url": "/assets/img/menu/4.jpg"
+ },
+ {
+  "categorie": "Plats",
+  "nom": "Tajine de poulet",
+  "description": "Poulet mijoté avec légumes parfumee avec épices.",
+  "prix": 700,
+  "photo_url": "/assets/img/menu/tajine.jpg"
+ },
+ {
+  "categorie": "Plats",
+  "nom": "Couscous",
+  "description": "Couscous viande aux légumes frais bien fait.",
+  "prix": 900,
+  "photo_url": "/assets/img/menu/5.jpg"
+ },
+ {
+  "categorie": "Plats",
+  "nom": "Marmite de fruits de mer",
+  "description": "Un assortiment raffiné de fruits de mer fraiches.",
+  "prix": 1500,
+  "photo_url": "/assets/img/menu/6.jpg"
+ },
+ {
+  "categorie": "Plats",
+  "nom": "Purée et steak",
+  "description": "Purée de pommes de terre avec un streak.",
+  "prix": 1000,
+  "photo_url": "/assets/img/menu/7.jpg"
+ },
+ {
+  "categorie": "Plats",
+  "nom": "Macaronis gratinés",
+  "description": "Des macaronis fondants enrobés d’une sauce crémeuse au fromage.",
+  "prix": 500,
+  "photo_url": "/assets/img/menu/8.jpg"
+ },
+ {
+  "categorie": "Plats",
+  "nom": "Lasagnes à la bolognaise",
+  "description": "Des pâtes fraîches superposées avec une sauce bolognaise mijotée.",
+  "prix": 800,
+  "photo_url": "/assets/img/menu/9.jpg"
+ },
+ {
+  "categorie": "Plats",
+  "nom": "Gratin dauphinois",
+  "description": "Pommes de terre cuites au four dans une crème onctueuse à l’ai.",
+  "prix": 550,
+  "photo_url": "/assets/img/menu/10.jpg"
+ },
+ {
+  "categorie": "Desserts",
+  "nom": "Brownie",
+  "description": "Délicieux sucree brownie au chocolat noir.",
+  "prix": 250,
+  "photo_url": "/assets/img/menu/brownie.jpg"
+ },
+ {
+  "categorie": "Desserts",
+  "nom": "Waffle",
+  "description": "Délicieux waffle au fraise fraiches et sucre glace .",
+  "prix": 200,
+  "photo_url": "/assets/img/menu/waffle.jpg"
+ },
+ {
+  "categorie": "Desserts",
+  "nom": "Tiramisu",
+  "description": "Un dessert italien raffiné bien parfumee au cafe.",
+  "prix": 200,
+  "photo_url": "/assets/img/menu/tiramisu.jpg"
+ },
+ {
+  "categorie": "Desserts",
+  "nom": "Fondant au chocolat",
+  "description": "Un cœur coulant de chocolat noir intense.",
+  "prix": 300,
+  "photo_url": "/assets/img/menu/18.jpg"
+ },
+ {
+  "categorie": "Desserts",
+  "nom": "CheeseCake",
+  "description": "Délicieux Cheesecake auX fruits rouges avec une crème fraiche.",
+  "prix": 250,
+  "photo_url": "/assets/img/menu/17.jpg"
+ },
+ {
+  "categorie": "Desserts",
+  "nom": "Tarte au citron",
+  "description": "Tarte de crème au citron acidulée et fondante.",
+  "prix": 200,
+  "photo_url": "/assets/img/menu/meringue.jpg"
+ },
+ {
+  "categorie": "Desserts",
+  "nom": "Creme Brulee",
+  "description": "Une crème onctueuse à la vanille, délicatement caramélisée",
+  "prix": 250,
+  "photo_url": "/assets/img/menu/19.jpg"
+ },
+ {
+  "categorie": "Desserts",
+  "nom": "Baklawa",
+  "description": "Une Baklawa au miel et aux noix, délicieuse et sucrée",
+  "prix": 150,
+  "photo_url": "/assets/img/menu/baklava.jpg"
+ },
+ {
+  "categorie": "Boissons",
+  "nom": "Selecto",
+  "description": "Selecto – Une boisson gazeuse algérienne au goût unique de caramel .",
+  "prix": 100,
+  "photo_url": "/assets/img/menu/selecto.jpg"
+ },
+ {
+  "categorie": "Boissons",
+  "nom": "Café Expresso",
+  "description": "Un coffee noir court et intense bien dosee",
+  "prix": 150,
+  "photo_url": "/assets/img/menu/11.jpg"
+ },
+ {
+  "categorie": "Boissons",
+  "nom": "Matcha Latte",
+  "description": "Un mélange de thé matcha finement moulu et de lait chaud.",
+  "prix": 400,
+  "photo_url": "/assets/img/menu/12.jpg"
+ },
+ {
+  "categorie": "Boissons",
+  "nom": "Cappuccino",
+  "description": "Un espresso corsé surmonté d’une mousse de lait .",
+  "prix": 300,
+  "photo_url": "/assets/img/menu/13.jpg"
+ },
+ {
+  "categorie": "Boissons",
+  "nom": "Jus d’orange",
+  "description": "Un pur jus d’orange naturel pressé à la minute frais.",
+  "prix": 200,
+  "photo_url": "/assets/img/menu/14.jpg"
+ },
+ {
+  "categorie": "Boissons",
+  "nom": "Iced Coffee",
+  "description": "Un café glacé rafraîchissant, préparé avec un espresso intense et du lait.",
+  "prix": 250,
+  "photo_url": "/assets/img/menu/15.jpg"
+ },
+ {
+  "categorie": "Boissons",
+  "nom": "Smoothie fraise & banane",
+  "description": "Un mélange velouté et gourmand de fraises et de bananes fraîches.",
+  "prix": 400,
+  "photo_url": "/assets/img/menu/16.jpg"
+ }
+]
