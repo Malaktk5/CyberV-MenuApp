@@ -52,5 +52,12 @@ def test_every_role_has_a_home_that_exists():
 
 def test_login_page_sends_each_role_to_its_screen(anon):
     html = anon.get("/admin/login.html").text
-    assert "ROLE_HOME" in html and "shared/staff.js" in html
-    assert "cet espace sera bientôt disponible" not in html  # l'ancien message provisoire a disparu
+    assert 'src="/assets/js/admin/login.js"' in html
+    assert "cet espace sera bientôt disponible" not in html
+
+    login_js = anon.get("/assets/js/admin/login.js").text
+    assert "ROLE_HOME" in login_js
+    assert "../shared/staff.js" in login_js
+
+    staff_js = anon.get("/assets/js/shared/staff.js").text
+    assert "ROLE_HOME" in staff_js
