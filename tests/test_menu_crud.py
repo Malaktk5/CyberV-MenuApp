@@ -1,50 +1,11 @@
-"""Tests CRUD du menu : création, lecture, modification, suppression, validation et erreurs """
+"""Tests menu item creation, reading, updates, archiving, deletion, and validation."""
 import uuid
 
 import pytest
-from fastapi.testclient import TestClient
 
-from app.db import cursor
-from app.main import app
-from app.security import hash_password
-
-PWD = "Secret123!"
-PREFIX = "ZZ_MENU_"
-EMAIL_PREFIX = "menutest-"
+PREFIX = "ZZ_TEST_MENU_"  # commence par ZZ_TEST_ : nettoyé automatiquement (tests/conftest.py)
 MISSING_ID = 999999999
 PLAT_KEYS = {"id", "nom", "prix", "disponible", "archive"}
-
-
-def logged_gerant():
-    email = f"{EMAIL_PREFIX}{uuid.uuid4().hex[:8]}@test.local"
-    with cursor() as cur:
-        cur.execute("INSERT INTO employes (nom, prenom, email, mot_de_passe_hash, role) VALUES ('Test', 'Menu', %s, %s, 'gerant')",
-                    (email, hash_password(PWD)))
-    c = TestClient(app)
-    assert c.post("/api/auth/login", json={"email": email, "mot_de_passe": PWD}).status_code == 200
-    return c
-
-
-@pytest.fixture(autouse=True)
-def cleanup():
-    yield
-    with cursor() as cur:
-        # commandes de test créées pour le cas "plat déjà commandé"
-        cur.execute("""SELECT DISTINCT commande_id FROM lignes_commande
-                       WHERE plat_id IN (SELECT id FROM plats WHERE nom LIKE %s)""", (PREFIX + "%",))
-        cids = [r["commande_id"] for r in cur.fetchall()]
-        if cids:
-            cur.execute("DELETE FROM lignes_commande WHERE commande_id = ANY(%s)", (cids,))
-            cur.execute("DELETE FROM commandes WHERE id = ANY(%s)", (cids,))
-        cur.execute("DELETE FROM options_plat WHERE plat_id IN (SELECT id FROM plats WHERE nom LIKE %s)", (PREFIX + "%",))
-        cur.execute("DELETE FROM plats WHERE nom LIKE %s", (PREFIX + "%",))
-        cur.execute("DELETE FROM categories WHERE nom LIKE %s", (PREFIX + "%",))
-        cur.execute("DELETE FROM employes WHERE email LIKE %s", (EMAIL_PREFIX + "%@test.local",))
-
-
-@pytest.fixture
-def admin():
-    return logged_gerant()
 
 
 @pytest.fixture
@@ -119,9 +80,9 @@ def test_admin_list_contains_created_plat(admin, cat):
     assert PLAT_KEYS <= set(found)
 
 
-def test_public_menu_structure_and_content(admin, cat):
+def test_public_menu_structure_and_content(admin, anon, cat):
     p = admin.post("/api/admin/plats", json=body(cat)).json()
-    r = TestClient(app).get("/api/menu")
+    r = anon.get("/api/menu")
     assert r.status_code == 200
     categories = r.json()
     assert categories and all({"id", "nom", "plats"} <= set(c) for c in categories)
@@ -132,8 +93,8 @@ def test_public_menu_structure_and_content(admin, cat):
     assert isinstance(plat["prix"], float)
 
 
-def test_empty_category_is_not_in_public_menu(admin, cat):
-    ids = {c["id"] for c in TestClient(app).get("/api/menu").json()}
+def test_empty_category_is_not_in_public_menu(anon, cat):
+    ids = {c["id"] for c in anon.get("/api/menu").json()}
     assert cat["id"] not in ids
 
 
@@ -186,16 +147,12 @@ def test_delete_unknown_plat_returns_404(admin):
     assert admin.delete(f"/api/admin/plats/{MISSING_ID}").status_code == 404
 
 
-def test_delete_already_ordered_plat_returns_409_and_can_be_archived(admin, cat):
+def test_delete_already_ordered_plat_returns_409_and_can_be_archived(admin, anon, cat, make_order):
     p = admin.post("/api/admin/plats", json=body(cat)).json()
-    with cursor() as cur:  # une commande réelle référence ce plat
-        cur.execute("INSERT INTO commandes (mode, client_nom) VALUES ('a_emporter', 'Test') RETURNING id")
-        cid = cur.fetchone()["id"]
-        cur.execute("""INSERT INTO lignes_commande (commande_id, plat_id, nom_plat, prix_unitaire, quantite, total_ligne)
-                       VALUES (%s, %s, %s, 500, 1, 500)""", (cid, p["id"], p["nom"]))
+    make_order(plat=p, mode="a_emporter")  # une commande réelle référence ce plat
     r = admin.delete(f"/api/admin/plats/{p['id']}")
     assert r.status_code == 409 and "archivez-le" in r.json()["detail"]
     # le plat existe toujours, et l'archivage est l'alternative proposée
     assert p["id"] in {x["id"] for x in admin.get("/api/admin/plats").json()}
     assert admin.post(f"/api/admin/plats/{p['id']}/archiver").json()["archive"] is True
-    assert p["id"] not in {pl["id"] for c in TestClient(app).get("/api/menu").json() for pl in c["plats"]}
+    assert p["id"] not in {pl["id"] for c in anon.get("/api/menu").json() for pl in c["plats"]}

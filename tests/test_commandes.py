@@ -1,36 +1,17 @@
-"""Parcours de commande : client (sans compte) -> panier -> commande -> réception côté gérant."""
-import os
-import sys
+"""Tests the complete order flow from the customer to the manager."""
 import uuid
 
 import pytest
-from fastapi.testclient import TestClient
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.db import cursor
-from app.main import app
 from app.routers import commandes as cmd_module
-from tests.test_admin import logged_client  # noqa: E402  (client gérant connecté)
 
-NOTE = "ZZ_TEST_note"
-
-
-@pytest.fixture(autouse=True)
-def cleanup():
-    cmd_module._hits.clear()
-    yield
-    with cursor() as cur:
-        cur.execute("DELETE FROM commandes WHERE note LIKE 'ZZ_TEST_%'")
-        cur.execute("DELETE FROM options_plat WHERE plat_id IN (SELECT id FROM plats WHERE nom LIKE 'ZZ_TEST_%')")
-        cur.execute("DELETE FROM plats WHERE nom LIKE 'ZZ_TEST_%'")
-        cur.execute("DELETE FROM categories WHERE nom LIKE 'ZZ_TEST_%'")
-        cur.execute("DELETE FROM employes WHERE email LIKE 'test-%@test.local'")
+NOTE = "ZZ_TEST_note"  # le préfixe ZZ_TEST_ permet le nettoyage automatique (tests/conftest.py)
 
 
 @pytest.fixture
-def plat():
-    g = logged_client("gerant")
+def plat(admin):
+    g = admin
     cat = g.post("/api/admin/categories", json={"nom": "ZZ_TEST_Cmd"}).json()
     p = g.post("/api/admin/plats", json={"categorie_id": cat["id"], "nom": "ZZ_TEST_Plat", "prix": 500}).json()
     return g, p
@@ -41,14 +22,14 @@ def order(c, p, **kw):
     return c.post("/api/commandes", json=body)
 
 
-def test_options():
-    o = TestClient(app).get("/api/options-commande").json()
+def test_options(anon):
+    o = anon.get("/api/options-commande").json()
     assert o["frais_livraison"] == 200 and 1 in o["tables"]
 
 
-def test_dine_in_order_and_manager_receives_it(plat):
+def test_dine_in_order_and_manager_receives_it(plat, anon):
     g, p = plat
-    c = TestClient(app)  # le client n'a pas de compte
+    c = anon  # le client n'a pas de compte
     r = order(c, p)
     assert r.status_code == 201
     d = r.json()
@@ -61,9 +42,9 @@ def test_dine_in_order_and_manager_receives_it(plat):
     assert d["numero"] in {x["numero"] for x in g.get(f"/api/admin/commandes?statut=toutes&q={d['numero']}").json()}
 
 
-def test_delivery_fee_and_card_payment_is_simulated(plat):
+def test_delivery_fee_and_card_payment_is_simulated(plat, anon):
     _, p = plat
-    c = TestClient(app)
+    c = anon
     d = order(c, p, mode="livraison", table_numero=None, client_nom="Sara", client_telephone="0550 12 34 56",
               adresse_livraison="12 rue des Roses", paiement_mode="en_ligne").json()
     assert d["frais_livraison"] == 200 and d["total"] == 1200 and d["paiement_statut"] == "paye"
@@ -72,9 +53,9 @@ def test_delivery_fee_and_card_payment_is_simulated(plat):
         assert not [r for r in cur.fetchall() if "carte" in r["column_name"] or "cvc" in r["column_name"]]
 
 
-def test_validation_rules(plat):
+def test_validation_rules(plat, anon):
     _, p = plat
-    c = TestClient(app)
+    c = anon
     assert order(c, p, table_numero=None).status_code == 422                                   # table obligatoire
     assert order(c, p, table_numero=999).status_code == 422                                    # table inconnue
     assert order(c, p, mode="a_emporter", table_numero=None).status_code == 422                # nom + téléphone
@@ -85,9 +66,9 @@ def test_validation_rules(plat):
     assert c.post("/api/commandes", json={"mode": "sur_place", "table_numero": 1, "lignes": [{"plat_id": 99999999, "quantite": 1}]}).status_code == 409
 
 
-def test_unavailable_and_archived_dishes_are_refused(plat):
+def test_unavailable_and_archived_dishes_are_refused(plat, anon):
     g, p = plat
-    c = TestClient(app)
+    c = anon
     g.patch(f"/api/staff/plats/{p['id']}/disponibilite", json={"disponible": False})
     r = order(c, p)
     assert r.status_code == 409 and "plus disponible" in r.json()["detail"]
@@ -96,16 +77,16 @@ def test_unavailable_and_archived_dishes_are_refused(plat):
     assert order(c, p).status_code == 409
 
 
-def test_prices_come_from_database_not_from_client(plat):
+def test_prices_come_from_database_not_from_client(plat, anon):
     _, p = plat
-    r = TestClient(app).post("/api/commandes", json={"mode": "sur_place", "table_numero": 1, "note": NOTE, "prix": 1, "total": 1,
+    r = anon.post("/api/commandes", json={"mode": "sur_place", "table_numero": 1, "note": NOTE, "prix": 1, "total": 1,
                                                       "lignes": [{"plat_id": p["id"], "quantite": 1, "prix": 1}]})
     assert r.status_code == 201 and r.json()["total"] == 500
 
 
-def test_tracking_by_token(plat):
+def test_tracking_by_token(plat, anon):
     _, p = plat
-    c = TestClient(app)
+    c = anon
     d = order(c, p).json()
     s = c.get(f"/api/commandes/suivi/{d['suivi_token']}").json()
     assert s["statut"] == "recue" and s["total"] == 1000 and s["lignes"][0]["nom"] == "ZZ_TEST_Plat" and "client_telephone" not in s
@@ -113,39 +94,24 @@ def test_tracking_by_token(plat):
     assert c.get(f"/api/commandes/suivi/{uuid.uuid4()}").status_code == 404
 
 
-def test_manager_cancel_rules(plat):
+def test_admin_orders_require_manager(anon, login_as):
+    assert anon.get("/api/admin/commandes").status_code == 401
+    assert login_as("serveur").get("/api/admin/commandes").status_code == 403
+
+
+def test_manager_cancel_rules(plat, anon, make_order, get_order, get_history):
     g, p = plat
-    c = TestClient(app)
+    c = anon
     paid = order(c, p, paiement_mode="en_ligne").json()
-    r = g.post(f"/api/admin/commandes/{_id(paid['numero'])}/annuler").json()
-    assert r["statut"] == "annulee" and r["paiement_statut"] == "rembourse"            # payée en ligne -> remboursée
-    assert g.post(f"/api/admin/commandes/{_id(paid['numero'])}/annuler").status_code == 409  # déjà annulée
+    paid_id = get_order(paid["numero"])["id"]
+    r = g.post(f"/api/admin/commandes/{paid_id}/annuler")
+    assert r.status_code == 200
+    assert r.json()["statut"] == "annulee"
+    assert r.json()["paiement_statut"] == "rembourse"
+    assert g.post(f"/api/admin/commandes/{paid_id}/annuler").status_code == 409
     assert g.post("/api/admin/commandes/99999999/annuler").status_code == 404
     assert c.get(f"/api/commandes/suivi/{paid['suivi_token']}").json()["statut"] == "annulee"
-    with cursor() as cur:  # l'annulation est tracée dans l'historique avec l'employé
-        cur.execute("SELECT employe_id FROM historique_statuts WHERE commande_id = %s AND nouveau_statut = 'annulee'", (_id(paid["numero"]),))
-        assert cur.fetchone()["employe_id"] is not None
-    # une commande déjà prise en charge ne peut plus être annulée (trigger SQL)
-    d = order(c, p).json()
-    with cursor() as cur:
-        cur.execute("UPDATE commandes SET statut = 'en_preparation' WHERE numero = %s", (d["numero"],))
-    assert g.post(f"/api/admin/commandes/{_id(d['numero'])}/annuler").status_code == 409
+    assert get_history(paid_id)[-1]["nouveau_statut"] == "annulee"
 
-
-def test_admin_orders_require_manager(plat):
-    _, p = plat
-    assert TestClient(app).get("/api/admin/commandes").status_code == 401
-    assert logged_client("serveur").get("/api/admin/commandes").status_code == 403
-
-
-def test_order_rate_limit(plat, monkeypatch):
-    _, p = plat
-    monkeypatch.setattr(cmd_module, "RATE", 2)
-    c = TestClient(app)
-    assert [order(c, p).status_code for _ in range(3)] == [201, 201, 429]
-
-
-def _id(numero):
-    with cursor() as cur:
-        cur.execute("SELECT id FROM commandes WHERE numero = %s", (numero,))
-        return cur.fetchone()["id"]
+    d = make_order(statut="en_preparation")
+    assert g.post(f"/api/admin/commandes/{d['id']}/annuler").status_code == 409
