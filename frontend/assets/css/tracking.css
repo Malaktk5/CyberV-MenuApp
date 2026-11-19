@@ -1,0 +1,88 @@
+/* Customer order tracking page */
+.wrap {
+    max-width: 560px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.steps {
+    margin: 1.2rem 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    list-style: none;
+}
+
+.steps li {
+    padding: 0.7rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    border-radius: 10px;
+    background: #f6f6f6;
+    color: #999;
+    font-weight: 700;
+}
+
+.steps li i {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #ddd;
+    color: #fff;
+    font-size: 0.85rem;
+    font-style: normal;
+}
+
+.steps li.done {
+    background: var(--gold-xl);
+    color: var(--ink);
+}
+
+.steps li.done i {
+    background: var(--gold);
+}
+
+.steps li.now {
+    border: 2px solid var(--gold-d);
+    color: var(--ink);
+}
+
+.banner {
+    margin: 1rem 0;
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    background: #fdeceb;
+    color: var(--danger);
+    font-weight: 700;
+}
+
+.line {
+    padding: 0.3rem 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--gold-l);
+}
+
+.note {
+    margin-top: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    background: var(--gold-xl);
+}
+
+.tracking-card {
+    padding: 1.4rem;
+}
+
+.tracking-total {
+    font-size: 1.15rem;
+}
+
+.tracking-payment {
+    margin: 0.6rem 0 0;
+}

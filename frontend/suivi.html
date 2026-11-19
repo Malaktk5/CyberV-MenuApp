@@ -1,28 +1,31 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Suivi de commande · Yummy</title>
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/public.css">
-<style>.wrap{max-width:560px;margin:2rem auto;padding:0 1rem}.steps{list-style:none;padding:0;margin:1.2rem 0;display:flex;flex-direction:column;gap:.6rem}.steps li{display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;border-radius:10px;background:#f6f6f6;color:#999;font-weight:700}
-.steps li i{width:26px;height:26px;border-radius:50%;background:#ddd;color:#fff;display:grid;place-items:center;font-style:normal;font-size:.85rem}.steps li.done{background:var(--gold-xl);color:var(--ink)}.steps li.done i{background:var(--gold)}.steps li.now{border:2px solid var(--gold-d);color:var(--ink)}
-.banner{padding:.9rem 1rem;border-radius:10px;font-weight:700;background:#fdeceb;color:var(--danger);margin:1rem 0}.line{display:flex;justify-content:space-between;gap:1rem;padding:.3rem 0;border-bottom:1px solid var(--gold-l)}.note{background:var(--gold-xl);padding:.6rem .8rem;border-radius:8px;margin-top:.8rem}</style></head>
-<body><header class="top"><a href="/"><img class="logo" src="/assets/img/logo.png" alt="Yummy"></a><nav><a href="/#menu">Menu</a></nav></header>
-<main class="wrap"><div class="card" id="box" style="padding:1.4rem"><p class="muted">Chargement…</p></div></main>
-<script type="module">
-import { esc, da } from '/assets/js/shared/utils.js';
-const token = new URLSearchParams(location.search).get('t') || '', box = document.getElementById('box');
-const FLOW = {livraison: [['recue', 'Commande reçue'], ['en_preparation', 'En préparation'], ['prete', 'Prête'], ['en_route', 'En route'], ['livree', 'Livrée']],
-  other: [['recue', 'Commande reçue'], ['en_preparation', 'En préparation'], ['prete', 'Prête'], ['servie', 'Servie']]};
-const BAD = {annulee: 'Cette commande a été annulée.', echec: "La livraison n'a pas pu aboutir.", remboursee: 'Cette commande a été annulée et remboursée.'};
-let timer;
-async function load() {
-  const r = await fetch('/api/commandes/suivi/' + encodeURIComponent(token));
-  if (!r.ok) { box.innerHTML = '<h2>Commande introuvable</h2><p class="muted">Vérifiez le lien de suivi.</p><a class="btn" href="/">Retour à l\'accueil</a>'; clearInterval(timer); return; }
-  const c = await r.json(), flow = FLOW[c.mode === 'livraison' ? 'livraison' : 'other'], idx = flow.findIndex(([k]) => k === c.statut), bad = BAD[c.statut];
-  box.innerHTML = `<h2>Commande ${esc(c.numero)}</h2><p class="muted">${c.mode === 'sur_place' ? 'Sur place · table ' + c.table_numero : c.mode === 'livraison' ? 'Livraison' : 'À emporter'}</p>
-  ${bad ? `<div class="banner">${bad}</div>` : `<ul class="steps">${flow.map(([k, l], i) => `<li class="${i < idx ? 'done' : i === idx ? 'done now' : ''}"><i>${i <= idx ? '✓' : i + 1}</i>${l}</li>`).join('')}</ul>`}
-  ${c.lignes.map(l => `<div class="line"><span>${l.quantite}× ${esc(l.nom)}${l.commentaire ? `<br><small class="muted">${esc(l.commentaire)}</small>` : ''}</span><b>${da(l.total)}</b></div>`).join('')}
-  ${c.frais_livraison ? `<div class="line"><span>Livraison</span><b>${da(c.frais_livraison)}</b></div>` : ''}<div class="line" style="font-size:1.15rem"><b>Total</b><b>${da(c.total)}</b></div>
-  <p class="muted" style="margin:.6rem 0 0">${c.paiement_mode === 'en_ligne' ? 'Payé par carte' : c.paiement_statut === 'paye' ? 'Payé en espèces' : 'À régler en espèces'}</p>${c.note ? `<div class="note"><b>Votre note :</b> ${esc(c.note)}</div>` : ''}`;
-  if (['servie', 'livree', 'annulee', 'echec', 'remboursee'].includes(c.statut)) clearInterval(timer);
-}
-load(); timer = setInterval(load, 5000);
-</script></body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Suivi de commande · Yummy</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/public.css">
+    <link rel="stylesheet" href="/assets/css/tracking.css">
+</head>
+
+<body>
+    <header class="top">
+        <a href="/"><img class="logo" src="/assets/img/logo.png" alt="Yummy"></a>
+        <nav><a href="/#menu">Menu</a></nav>
+    </header>
+
+    <main class="wrap">
+        <div class="card tracking-card" id="box">
+            <p class="muted">Chargement…</p>
+        </div>
+    </main>
+
+    <script type="module" src="/assets/js/public/tracking.js"></script>
+</body>
+</html>

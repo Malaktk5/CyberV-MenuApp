@@ -337,11 +337,11 @@ def resume_commandes():
     return {**r, "derniere_numero": last["numero"] if last else None}
 
 
+#this should be taken off as well as the whole live orders logic
 @router.post("/commandes/{cid}/annuler")
 def annuler_commande(cid: int, user=Depends(require_role("gerant"))):
-    """Annulation possible seulement tant que la commande est « reçue » (règle du trigger SQL). Une commande déjà payée en ligne passe à « remboursé »."""
     with cursor() as cur:
-        cur.execute("SELECT set_config('app.employe_id', %s, true)", (str(user["id"]),))  # tracé dans historique_statuts
+        cur.execute("SELECT set_config('app.employe_id', %s, true)", (str(user["id"]),))
         cur.execute("""UPDATE commandes SET statut = 'annulee',
                               paiement_statut = CASE WHEN paiement_statut = 'paye' THEN 'rembourse'::statut_paiement ELSE paiement_statut END
                        WHERE id = %s AND statut = 'recue' RETURNING id, numero, statut::text AS statut, paiement_statut::text AS paiement_statut""", (cid,))
