@@ -364,6 +364,10 @@ footer.bot {
     font-size: 1rem;
 }
 
+.login-description {
+    margin: 0;
+}
+
 /* Add-to-cart and cart */
 .add-to-cart {
     padding: 10px;
@@ -614,6 +618,31 @@ dialog::backdrop {
     color: #fff;
     font-size: 36px;
     line-height: 64px;
+}
+
+/* New styles */
+.menu-loading {
+    text-align: center;
+}
+
+.menu-loading-error {
+    text-align: center;
+}
+
+.story-title-line {
+    margin: 0.4rem 0 1rem;
+}
+
+.checkout-title-line {
+    margin: 0;
+}
+
+.confirmation {
+    text-align: center;
+}
+
+.confirmation-actions {
+    justify-content: center;
 }
 
 /* Responsive public layout */

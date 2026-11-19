@@ -1,43 +1,232 @@
 import { api } from '../shared/api.js';
-import { esc, da, toast } from '../shared/utils.js';
+import { da, esc, toast } from '../shared/utils.js';
 
-const F = {statut: 'encours', q: ''};
-const MODES = {sur_place: 'Sur place', a_emporter: 'À emporter', livraison: 'Livraison'};
-const STATUTS = {recue: 'Reçue', en_preparation: 'En préparation', prete: 'Prête', servie: 'Servie', en_route: 'En route', livree: 'Livrée', echec: 'Échec', annulee: 'Annulée', remboursee: 'Remboursée'};
-let timer, known = null;
+const filters = {
+    statut: 'encours',
+    q: '',
+};
 
-const ago = iso => { const m = Math.max(0, Math.floor((Date.now() - new Date(iso)) / 60000)); return m < 1 ? "à l'instant" : m < 60 ? `il y a ${m} min` : new Date(iso).toLocaleString('fr-FR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}); };
-const pay = o => o.paiement_mode === 'en_ligne' ? (o.paiement_statut === 'rembourse' ? '<span class="tag red">Carte · remboursée</span>' : '<span class="tag green">Carte · payée</span>') : (o.paiement_statut === 'paye' ? '<span class="tag green">Espèces · payée</span>' : '<span class="tag">Espèces · à encaisser</span>');
-const where = o => o.mode === 'sur_place' ? `Table ${o.table_numero ?? '—'}` : `${esc(o.client_nom)} · ${esc(o.client_telephone)}`;
+const MODES = {
+    sur_place: 'Sur place',
+    a_emporter: 'À emporter',
+    livraison: 'Livraison',
+};
 
-function card(o, isNew) {
-  return `<article class="oc s-${o.statut} ${isNew ? 'new' : ''}"><div class="oh"><b>${esc(o.numero)}</b><span class="tag">${STATUTS[o.statut]}</span></div>
-  <div><span class="tag">${MODES[o.mode]}</span> <b>${where(o)}</b> <small class="muted">· ${ago(o.created_at)}</small></div>
-  ${o.mode === 'livraison' ? `<div class="muted">${esc(o.adresse_livraison)}</div>` : ''}
-  <ul>${o.lignes.map(l => `<li><span><b>${l.quantite}×</b> ${esc(l.nom)}${l.commentaire ? `<br><small>${esc(l.commentaire)}</small>` : ''}</span><span>${da(l.total)}</span></li>`).join('')}</ul>
-  ${o.note ? `<div class="onote"><b>Note :</b> ${esc(o.note)}</div>` : ''}
-  ${o.frais_livraison ? `<div class="muted">Frais de livraison : ${da(o.frais_livraison)}</div>` : ''}
-  <div class="ofoot"><div>${pay(o)}<br><b style="font-size:1.15rem">${da(o.total)}</b></div>${o.statut === 'recue' ? `<button class="danger sm" data-cancel="${o.id}">Annuler</button>` : ''}</div></article>`;
+const STATUSES = {
+    recue: 'Reçue',
+    en_preparation: 'En préparation',
+    prete: 'Prête',
+    servie: 'Servie',
+    en_route: 'En route',
+    livree: 'Livrée',
+    echec: 'Échec',
+    annulee: 'Annulée',
+    remboursee: 'Remboursée',
+};
+
+let pollTimer;
+let knownOrderIds = null;
+
+function ago(isoDate) {
+    const minutes = Math.max(
+        0,
+        Math.floor((Date.now() - new Date(isoDate)) / 60000),
+    );
+
+    if (minutes < 1) return "à l'instant";
+    if (minutes < 60) return `il y a ${minutes} min`;
+
+    return new Date(isoDate).toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 }
 
-async function load(el) {
-  const list = el.querySelector('#olist'); if (!list) return;
-  const os = await api(`/api/admin/commandes?statut=${F.statut}&q=${encodeURIComponent(F.q)}`, 'GET', undefined, {quiet: true}).catch(() => null);
-  if (!os) return;
-  const fresh = known ? new Set(os.filter(o => !known.has(o.id)).map(o => o.id)) : new Set(); known = new Set(os.map(o => o.id));
-  list.innerHTML = os.map(o => card(o, fresh.has(o.id))).join('') || '<p class="muted">Aucune commande.</p>';
-  list.querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => {
-    if (!confirm('Annuler cette commande ? (le client verra « annulée »)')) return;
-    try { await api(`/api/admin/commandes/${b.dataset.cancel}/annuler`, 'POST'); toast('Commande annulée'); load(el); } catch {}
-  });
+function paymentLabel(order) {
+    if (order.paiement_mode === 'en_ligne') {
+        return order.paiement_statut === 'rembourse'
+            ? '<span class="tag red">Carte · remboursée</span>'
+            : '<span class="tag green">Carte · payée</span>';
+    }
+
+    return order.paiement_statut === 'paye'
+        ? '<span class="tag green">Espèces · payée</span>'
+        : '<span class="tag">Espèces · à encaisser</span>';
 }
 
-export async function render(el) {
-  clearInterval(timer); known = null;
-  el.innerHTML = `<h2>Commandes</h2><div class="tabs">${[['encours', 'En cours'], ['terminees', 'Terminées'], ['annulees', 'Annulées'], ['toutes', 'Toutes']].map(([k, l]) => `<button data-s="${k}" class="${k === F.statut ? 'on' : ''}">${l}</button>`).join('')}
-  <input id="oq" placeholder="N° ou nom du client…" value="${esc(F.q)}" style="max-width:240px;margin-left:auto"></div><div class="ocards" id="olist"><p class="muted">Chargement…</p></div>`;
-  el.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { F.statut = b.dataset.s; render(el); });
-  let t; el.querySelector('#oq').oninput = e => { F.q = e.target.value; clearTimeout(t); t = setTimeout(() => { known = null; load(el); }, 300); };
-  await load(el);
-  timer = setInterval(() => { if (location.hash !== '#/commandes') return clearInterval(timer); load(el); }, 5000);  // actualisation automatique
+function orderLocation(order) {
+    if (order.mode === 'sur_place') {
+        return `Table ${order.table_numero ?? '—'}`;
+    }
+
+    return `${esc(order.client_nom)} · ${esc(order.client_telephone)}`;
+}
+
+function orderCard(order, isNew) {
+    return `
+        <article class="oc s-${order.statut} ${isNew ? 'new' : ''}">
+            <div class="oh">
+                <b>${esc(order.numero)}</b>
+                <span class="tag">${STATUSES[order.statut]}</span>
+            </div>
+
+            <div>
+                <span class="tag">${MODES[order.mode]}</span>
+                <b>${orderLocation(order)}</b>
+                <small class="muted">· ${ago(order.created_at)}</small>
+            </div>
+
+            ${order.mode === 'livraison'
+                ? `<div class="muted">${esc(order.adresse_livraison)}</div>`
+                : ''}
+
+            <ul>
+                ${order.lignes.map((line) => `
+                    <li>
+                        <span>
+                            <b>${line.quantite}×</b>
+                            ${esc(line.nom)}
+                            ${line.commentaire
+                                ? `<br><small>${esc(line.commentaire)}</small>`
+                                : ''}
+                        </span>
+                        <span>${da(line.total)}</span>
+                    </li>
+                `).join('')}
+            </ul>
+
+            ${order.note
+                ? `<div class="onote"><b>Note :</b> ${esc(order.note)}</div>`
+                : ''}
+
+            ${order.frais_livraison
+                ? `<div class="muted">Frais de livraison : ${da(order.frais_livraison)}</div>`
+                : ''}
+
+            <div class="ofoot">
+                <div>
+                    ${paymentLabel(order)}
+                    <br>
+                    <b class="order-total">${da(order.total)}</b>
+                </div>
+
+                ${order.statut === 'recue'
+                    ? `<button class="danger sm" data-cancel="${order.id}">Annuler</button>`
+                    : ''}
+            </div>
+        </article>
+    `;
+}
+
+async function loadOrders(root) {
+    const list = root.querySelector('#olist');
+    if (!list) return;
+
+    const orders = await api(
+        `/api/admin/commandes?statut=${filters.statut}&q=${encodeURIComponent(filters.q)}`,
+        'GET',
+        undefined,
+        { quiet: true },
+    ).catch(() => null);
+
+    if (!orders) return;
+
+    const freshIds = knownOrderIds
+        ? new Set(orders
+            .filter((order) => !knownOrderIds.has(order.id))
+            .map((order) => order.id))
+        : new Set();
+
+    knownOrderIds = new Set(orders.map((order) => order.id));
+
+    list.innerHTML = orders
+        .map((order) => orderCard(order, freshIds.has(order.id)))
+        .join('') || '<p class="muted">Aucune commande.</p>';
+
+    list.querySelectorAll('[data-cancel]').forEach((button) => {
+        button.onclick = async () => {
+            if (!confirm('Annuler cette commande ? (le client verra « annulée »)')) {
+                return;
+            }
+
+            try {
+                await api(
+                    `/api/admin/commandes/${button.dataset.cancel}/annuler`,
+                    'POST',
+                );
+                toast('Commande annulée');
+                loadOrders(root);
+            } catch {
+                // api() displays the error.
+            }
+        };
+    });
+}
+
+export async function render(root) {
+    clearInterval(pollTimer);
+    knownOrderIds = null;
+
+    const tabs = [
+        ['encours', 'En cours'],
+        ['terminees', 'Terminées'],
+        ['annulees', 'Annulées'],
+        ['toutes', 'Toutes'],
+    ];
+
+    root.innerHTML = `
+        <h2>Commandes</h2>
+
+        <div class="tabs">
+            ${tabs.map(([value, label]) => `
+                <button
+                    data-s="${value}"
+                    class="${value === filters.statut ? 'on' : ''}"
+                >${label}</button>
+            `).join('')}
+
+            <input
+                id="oq"
+                class="order-search"
+                placeholder="N° ou nom du client…"
+                value="${esc(filters.q)}"
+            >
+        </div>
+
+        <div class="ocards" id="olist">
+            <p class="muted">Chargement…</p>
+        </div>
+    `;
+
+    root.querySelectorAll('[data-s]').forEach((button) => {
+        button.onclick = () => {
+            filters.statut = button.dataset.s;
+            render(root);
+        };
+    });
+
+    let searchTimer;
+
+    root.querySelector('#oq').oninput = (event) => {
+        filters.q = event.target.value;
+        clearTimeout(searchTimer);
+
+        searchTimer = setTimeout(() => {
+            knownOrderIds = null;
+            loadOrders(root);
+        }, 300);
+    };
+
+    await loadOrders(root);
+
+    pollTimer = setInterval(() => {
+        if (location.hash !== '#/commandes') {
+            clearInterval(pollTimer);
+            return;
+        }
+
+        loadOrders(root);
+    }, 5000);
 }

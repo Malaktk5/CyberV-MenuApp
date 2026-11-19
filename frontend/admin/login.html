@@ -1,14 +1,49 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Connexion · Yummy</title>
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/public.css"></head>
-<body><header class="top"><a href="/"><img class="logo" src="/assets/img/logo.png" alt="Yummy"></a><nav><a href="/">Accueil</a></nav></header>
-<form class="form-container" id="f"><img src="/assets/img/logo.png" alt=""><h2>Connexion</h2><div class="title-line"></div><p class="muted" style="margin:0">Espace réservé à l'équipe du restaurant</p>
-<input name="email" type="email" placeholder="Entrez votre email" required autocomplete="username"><input name="mot_de_passe" type="password" placeholder="Entrez votre mot de passe" required autocomplete="current-password">
-<p class="err" id="err" style="margin:0"></p><button type="submit">Se connecter</button></form>
-<script type="module">
-import { api } from '/assets/js/shared/api.js';
-document.getElementById('f').onsubmit = async e => { e.preventDefault(); const err = document.getElementById('err'); err.textContent = '';
-  try { const u = await api('/api/auth/login', 'POST', Object.fromEntries(new FormData(e.target)), {quiet: true});
-    if (u.role === 'gerant') location.href = '/admin/'; else err.textContent = `Connecté en tant que ${u.role} : cet espace sera bientôt disponible.`; }
-  catch (x) { err.textContent = x.message; } };
-</script></body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connexion · Yummy</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/public.css">
+</head>
+
+<body>
+    <header class="top">
+        <a href="/"><img class="logo" src="/assets/img/logo.png" alt="Yummy"></a>
+        <nav><a href="/">Accueil</a></nav>
+    </header>
+
+    <form class="form-container" id="f">
+        <img src="/assets/img/logo.png" alt="Yummy">
+        <h2>Connexion</h2>
+        <div class="title-line"></div>
+        <p class="muted login-description">Espace réservé à l'équipe du restaurant</p>
+
+        <input
+            name="email"
+            type="email"
+            placeholder="Entrez votre email"
+            required
+            autocomplete="username"
+        >
+        <input
+            name="mot_de_passe"
+            type="password"
+            placeholder="Entrez votre mot de passe"
+            required
+            autocomplete="current-password"
+        >
+
+        <p class="err" id="err"></p>
+        <button type="submit">Se connecter</button>
+    </form>
+
+    <script type="module" src="/assets/js/admin/login.js"></script>
+</body>
+</html>

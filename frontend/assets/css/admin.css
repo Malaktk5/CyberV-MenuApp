@@ -500,3 +500,41 @@ dialog::backdrop {
         margin: 0 1rem 0 0;
     }
 }
+
+.sound-button {
+    margin-bottom: 0.4rem;
+}
+
+.table-actions {
+    text-align: right;
+}
+
+.employee-total,
+.dashboard-range {
+    font: 600 0.95rem 'Quicksand', sans-serif;
+}
+
+.new-account-button {
+    margin-left: auto;
+}
+
+.dish-available-label {
+    margin-top: 1.5rem;
+}
+
+.dashboard-line {
+    margin: 0.2rem 0;
+}
+
+.dashboard-subtitle {
+    margin-top: 1rem;
+}
+
+.order-search {
+    max-width: 240px;
+    margin-left: auto;
+}
+
+.order-total {
+    font-size: 1.15rem;
+}

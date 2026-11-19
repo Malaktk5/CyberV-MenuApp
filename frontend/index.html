@@ -1,28 +1,143 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Yummy · Restaurant</title>
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/public.css"></head>
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yummy · Restaurant</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/public.css">
+</head>
+
 <body id="top">
-<header class="top"><a href="/"><img class="logo" src="/assets/img/logo.png" alt="Yummy"></a>
-<div class="search-container"><input type="text" id="search" placeholder="Rechercher un plat…" aria-label="Rechercher un plat">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="gray"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16a6.471 6.471 0 004.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.02 14 5 11.98 5 9.5S7.02 5 9.5 5 14 7.02 14 9.5 11.98 14 9.5 14z"/></svg></div>
-<nav><a href="#top">Accueil</a><a href="#menu">Menu</a><a href="#contact">Contact</a><a class="staff" href="/admin/login.html">Espace personnel</a></nav>
-<div class="cart-icon" id="cartBtn" role="button" tabindex="0" aria-label="Ouvrir le panier">🛒 <span id="cart-count">0</span></div></header>
-<aside class="cart" id="cart"><h2>🛒 Panier</h2><ul id="cart-items"></ul><p class="cart-total">Total : <b id="cart-total">0 DA</b></p><button id="checkoutBtn">Valider la commande</button></aside>
-<dialog id="checkout"></dialog><dialog id="confirm"></dialog>
-<section class="hero"><div><h1>Bienvenue chez <span>Yummy</span></h1><p>Une cuisine généreuse, des produits frais et une table pensée pour vous.</p><a class="btn" href="#menu">Découvrir le menu</a></div>
-<div class="collage"><img src="/assets/img/menu/tajine.jpg" alt="Tajine"><img src="/assets/img/menu/1.jpg" alt="Salade César"><img src="/assets/img/menu/17.jpg" alt="Cheesecake"></div></section>
-<hr class="sep">
-<section class="sec" id="menu"><h2 class="stitle">Notre menu</h2><div class="title-line"></div>
-<div class="filter-container"><label for="category-filter">Filtrer par catégorie :</label><select id="category-filter"><option value="all">Toutes</option></select></div>
-<p id="no-results" class="muted">Il n'y a aucun plat avec ce nom.</p><div class="menu" id="menuList"><p class="muted" style="text-align:center">Chargement…</p></div></section>
-<hr class="sep">
-<section class="sec story"><img src="/assets/img/about/chef.jpg" alt="Notre équipe en cuisine"><div><h2>Notre histoire</h2><div class="title-line" style="margin:.4rem 0 1rem"></div>
-<p>Yummy est né d'une envie simple : faire de chaque repas un moment qui reste en mémoire. Des recettes soignées, des ingrédients choisis avec exigence et une équipe passionnée, du premier plat au dernier dessert.</p>
-<p class="muted">Remplacez ce texte par l'histoire de votre restaurant.</p></div></section>
-<section class="sec"><div class="gallery"><img src="/assets/img/menu/10.jpg" alt=""><img src="/assets/img/menu/16.jpg" alt=""><img src="/assets/img/menu/18.jpg" alt=""><img src="/assets/img/menu/8.jpg" alt=""><img src="/assets/img/menu/brownie.jpg" alt=""></div></section>
-<hr class="sep">
-<section class="sec" id="contact"><h2 class="stitle">Infos &amp; contact</h2><div class="title-line"></div><div class="contact"><div class="map"><iframe title="Localisation du restaurant" src="https://www.google.com/maps?q=36.3784556,3.8866868&amp;hl=fr&amp;z=16&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
-<div><h3>Adresse</h3><p><a href="https://maps.app.goo.gl/Ly2cwTZDNNevvHpcA" target="_blank" rel="noopener">Voir sur Google Maps</a></p><p><a class="btn" href="https://www.google.com/maps/dir/?api=1&amp;destination=36.3784556,3.8866868" target="_blank" rel="noopener">Itinéraire</a></p><h3>Horaires</h3><p>Tous les jours · 11h00 – 23h00</p><h3>Contact</h3><p>+213 00 00 00 00<br>contact@yummy.dz</p></div></div></section>
-<footer class="bot">© Yummy · Restaurant</footer>
-<script type="module" src="/assets/js/public/home.js"></script></body></html>
+    <header class="top">
+        <a href="/"><img class="logo" src="/assets/img/logo.png" alt="Yummy"></a>
+
+        <div class="search-container">
+            <input
+                type="text"
+                id="search"
+                placeholder="Rechercher un plat…"
+                aria-label="Rechercher un plat"
+            >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="gray">
+                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16a6.471 6.471 0 004.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.02 14 5 11.98 5 9.5S7.02 5 9.5 5 14 7.02 14 9.5 11.98 14 9.5 14z"/>
+            </svg>
+        </div>
+
+        <nav>
+            <a href="#top">Accueil</a>
+            <a href="#menu">Menu</a>
+            <a href="#contact">Contact</a>
+            <a class="staff" href="/admin/login.html">Espace personnel</a>
+        </nav>
+
+        <div class="cart-icon" id="cartBtn" role="button" tabindex="0" aria-label="Ouvrir le panier">
+            🛒 <span id="cart-count">0</span>
+        </div>
+    </header>
+
+    <aside class="cart" id="cart">
+        <h2>🛒 Panier</h2>
+        <ul id="cart-items"></ul>
+        <p class="cart-total">Total : <b id="cart-total">0 DA</b></p>
+        <button id="checkoutBtn">Valider la commande</button>
+    </aside>
+
+    <dialog id="checkout"></dialog>
+    <dialog id="confirm"></dialog>
+
+    <section class="hero">
+        <div>
+            <h1>Bienvenue chez <span>Yummy</span></h1>
+            <p>Une cuisine généreuse, des produits frais et une table pensée pour vous.</p>
+            <a class="btn" href="#menu">Découvrir le menu</a>
+        </div>
+
+        <div class="collage">
+            <img src="/assets/img/menu/tajine.jpg" alt="Tajine">
+            <img src="/assets/img/menu/1.jpg" alt="Salade César">
+            <img src="/assets/img/menu/17.jpg" alt="Cheesecake">
+        </div>
+    </section>
+
+    <hr class="sep">
+
+    <section class="sec" id="menu">
+        <h2 class="stitle">Notre menu</h2>
+        <div class="title-line"></div>
+
+        <div class="filter-container">
+            <label for="category-filter">Filtrer par catégorie :</label>
+            <select id="category-filter"><option value="all">Toutes</option></select>
+        </div>
+
+        <p id="no-results" class="muted">Il n'y a aucun plat avec ce nom.</p>
+        <div class="menu" id="menuList">
+            <p class="muted menu-loading">Chargement…</p>
+        </div>
+    </section>
+
+    <hr class="sep">
+
+    <section class="sec story">
+        <img src="/assets/img/about/chef.jpg" alt="Notre équipe en cuisine">
+        <div>
+            <h2>Notre histoire</h2>
+            <div class="title-line story-title-line"></div>
+            <p>Yummy est né d'une envie simple : faire de chaque repas un moment qui reste en mémoire. Des recettes soignées, des ingrédients choisis avec exigence et une équipe passionnée, du premier plat au dernier dessert.</p>
+            <p class="muted">Remplacez ce texte par l'histoire de votre restaurant.</p>
+        </div>
+    </section>
+
+    <section class="sec">
+        <div class="gallery">
+            <img src="/assets/img/menu/10.jpg" alt="">
+            <img src="/assets/img/menu/16.jpg" alt="">
+            <img src="/assets/img/menu/18.jpg" alt="">
+            <img src="/assets/img/menu/8.jpg" alt="">
+            <img src="/assets/img/menu/brownie.jpg" alt="">
+        </div>
+    </section>
+
+    <hr class="sep">
+
+    <section class="sec" id="contact">
+        <h2 class="stitle">Infos &amp; contact</h2>
+        <div class="title-line"></div>
+
+        <div class="contact">
+            <div class="map">
+                <iframe
+                    title="Localisation du restaurant"
+                    src="https://www.google.com/maps?q=36.3784556,3.8866868&amp;hl=fr&amp;z=16&amp;output=embed"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allowfullscreen
+                ></iframe>
+            </div>
+
+            <div>
+                <h3>Adresse</h3>
+                <p><a href="https://maps.app.goo.gl/Ly2cwTZDNNevvHpcA" target="_blank" rel="noopener">Voir sur Google Maps</a></p>
+                <p><a class="btn" href="https://www.google.com/maps/dir/?api=1&amp;destination=36.3784556,3.8866868" target="_blank" rel="noopener">Itinéraire</a></p>
+
+                <h3>Horaires</h3>
+                <p>Tous les jours · 11h00 – 23h00</p>
+
+                <h3>Contact</h3>
+                <p>+213 00 00 00 00<br>contact@yummy.dz</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bot">© Yummy · Restaurant</footer>
+
+    <script type="module" src="/assets/js/public/home.js"></script>
+</body>
+</html>
