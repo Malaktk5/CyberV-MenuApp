@@ -1,0 +1,117 @@
+/* Staff page body */
+body {
+    background: #fcfaf5;
+}
+
+/* Staff top navigation */
+.sbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 0.5rem clamp(1rem, 3vw, 2rem);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+}
+
+.sbar .logo {
+    height: 44px;
+    display: block;
+}
+
+.sbar h1 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.sright {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.sactions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.swho {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    text-align: right;
+}
+
+.swho small {
+    color: var(--muted);
+}
+
+/* Staff page content */
+.smain {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 1.5rem clamp(1rem, 3vw, 2rem);
+}
+
+.panel {
+    padding: 1.2rem;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: var(--shadow);
+}
+
+.placeholder {
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+.placeholder h2 {
+    font-size: 1.8rem;
+}
+
+/* Staff dialogs */
+dialog {
+    width: min(560px, 94vw);
+    padding: 1.5rem;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+dialog::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.mform {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.mform label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.mform .two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+}
+
+.mbtns {
+    margin-top: 0.4rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
