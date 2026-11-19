@@ -1,4 +1,4 @@
-"""Commande côté client (sans compte) : création, options et suivi par jeton."""
+"""Routes for creating customer orders and retrieving them with a tracking token."""
 import os, re, time, uuid
 from collections import defaultdict
 from decimal import Decimal

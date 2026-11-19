@@ -4,11 +4,11 @@ import psycopg2
 from fastapi import FastAPI, Response, status
 from fastapi.staticfiles import StaticFiles
 from app import config
-from app.routers import admin, auth, commandes, public, ws
+from app.routers import admin, auth, caisse, commandes, cuisine, dispatch, livraison, public, qr, salle, suivi, ws
 from app.seed import bootstrap
 
 
-# Handles application startup and shutdown lifecycle events (e.g., seeding initial database data)
+# Run database setup when the application starts. Seed failures are reported but do not stop startup.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="CyberV Yummy API", lifespan=lifespan)
 
 
-# Health check endpoint that verifies the API is running and can connect to PostgreSQL
+# Check whether both the API and PostgreSQL are available.
 @app.get("/health")
 def health_check(response: Response):
     db_url = os.getenv("DATABASE_URL", "postgresql://yummy_user:yummy_password@db:5432/yummy_db")
@@ -34,12 +34,19 @@ def health_check(response: Response):
         return {"status": "ERROR", "database": str(e)}
 
 
-app.include_router(auth.router)
-app.include_router(public.router)
-app.include_router(commandes.router)
-app.include_router(admin.router)
-app.include_router(admin.staff)
-app.include_router(ws.router)
+# Central router registration. Discuss any router change with the team before editing this section.
+ROUTERS = (
+    auth.router, public.router, commandes.router, admin.router, admin.staff, ws.router,
+    suivi.router,      # F1  suivi client, annulation, temps d'attente
+    cuisine.router,    # F2  écran cuisine
+    salle.router,      # F3  écran salle
+    caisse.router,     # F4  caisse
+    dispatch.router,   # F5  affectation des livraisons (page de la caisse)
+    livraison.router,  # F6  écran livreur
+    qr.router,         # F11 QR codes des tables
+)
+for r in ROUTERS:
+    app.include_router(r)
 
 config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=config.UPLOAD_DIR), name="uploads")

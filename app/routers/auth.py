@@ -1,3 +1,5 @@
+"""F0: authentication and role-based login sessions."""
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from app import config
