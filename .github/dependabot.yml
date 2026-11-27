@@ -1,0 +1,20 @@
+# Dependabot : propose chaque semaine une PR quand une dépendance a une mise à jour ou une faille de sécurité.
+version: 2
+updates:
+  - package-ecosystem: "pip"            # requirements.txt (et requirements-dev.txt)
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "docker"         # image de base du Dockerfile
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker-compose" # images postgres / redis du docker-compose.yml
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "github-actions" # actions utilisées dans .github/workflows
+    directory: "/"
+    schedule:
+      interval: "weekly"
