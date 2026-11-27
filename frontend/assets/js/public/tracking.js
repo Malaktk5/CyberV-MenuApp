@@ -25,7 +25,11 @@ const FINAL_MESSAGES = {
     remboursee: 'Cette commande a été annulée et remboursée.',
 };
 
-let refreshTimer;
+const FINAL_STATUSES = new Set(['servie', 'livree', 'annulee', 'echec', 'remboursee']);
+let refreshTimer = null;
+let loading = false;
+let cancelInProgress = false;
+let finished = false;
 
 function orderModeLabel(order) {
     if (order.mode === 'sur_place') {
@@ -40,6 +44,10 @@ function orderModeLabel(order) {
 }
 
 function paymentLabel(order) {
+    if (order.paiement_statut === 'rembourse') {
+        return 'Paiement en ligne remboursé';
+    }
+
     if (order.paiement_mode === 'en_ligne') {
         return 'Payé par carte';
     }
@@ -85,57 +93,149 @@ function renderOrderLines(order) {
         .join('');
 }
 
-async function loadTrackingPage() {
-    const response = await fetch(
-        `/api/commandes/suivi/${encodeURIComponent(trackingToken)}`,
-    );
+async function requestJson(url, options = {}) {
+    const response = await fetch(url, options);
+    const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-        trackingBox.innerHTML = `
-            <h2>Commande introuvable</h2>
-            <p class="muted">Vérifiez le lien de suivi.</p>
-            <a class="btn" href="/">Retour à l'accueil</a>
-        `;
-        clearInterval(refreshTimer);
+        throw new Error(data?.detail || `Erreur ${response.status}`);
+    }
+
+    return data;
+}
+
+async function loadWaitTime() {
+    if (!trackingToken) {
+        return null;
+    }
+
+    try {
+        const result = await requestJson(
+            `/api/suivi/${encodeURIComponent(trackingToken)}/temps-attente`,
+        );
+        return result.visible ? result.temps_attente_minutes : null;
+    } catch {
+        return null;
+    }
+}
+
+async function cancelOrder(button) {
+    if (cancelInProgress) {
         return;
     }
 
-    const order = await response.json();
-    const flow = order.mode === 'livraison'
-        ? FLOWS.livraison
-        : FLOWS.other;
-    const finalMessage = FINAL_MESSAGES[order.statut];
+    if (!window.confirm('Voulez-vous vraiment annuler cette commande ?')) {
+        return;
+    }
 
-    trackingBox.innerHTML = `
-        <h2>Commande ${esc(order.numero)}</h2>
-        <p class="muted">${orderModeLabel(order)}</p>
+    cancelInProgress = true;
+    button.disabled = true;
+    const feedback = trackingBox.querySelector('#cancel-feedback');
 
-        ${finalMessage
-            ? `<div class="banner">${finalMessage}</div>`
-            : `<ul class="steps">${renderStatusFlow(flow, order.statut)}</ul>`}
+    try {
+        await requestJson(
+            `/api/suivi/${encodeURIComponent(trackingToken)}/annuler`,
+            { method: 'POST' },
+        );
+        await loadTrackingPage();
+    } catch (error) {
+        if (feedback) {
+            feedback.textContent = error.message;
+        }
+        button.disabled = false;
+    } finally {
+        cancelInProgress = false;
+    }
+}
 
-        ${renderOrderLines(order)}
+async function loadTrackingPage() {
+    if (loading || finished) {
+        return;
+    }
 
-        ${order.frais_livraison
-            ? `<div class="line"><span>Livraison</span><b>${da(order.frais_livraison)}</b></div>`
-            : ''}
+    loading = true;
 
-        <div class="line tracking-total">
-            <b>Total</b>
-            <b>${da(order.total)}</b>
-        </div>
+    try {
+        const order = await requestJson(
+            `/api/commandes/suivi/${encodeURIComponent(trackingToken)}`,
+        );
+        const flow = order.mode === 'livraison'
+            ? FLOWS.livraison
+            : FLOWS.other;
+        const finalMessage = FINAL_MESSAGES[order.statut];
+        const waitTime = order.statut === 'en_preparation'
+            ? await loadWaitTime()
+            : null;
 
-        <p class="muted tracking-payment">${paymentLabel(order)}</p>
+        const waitTimeMarkup = order.statut === 'en_preparation'
+            ? `<div class="wait-time" role="status">
+                    <b>Temps de préparation estimé</b>
+                    <span>${waitTime === null
+                        ? 'Estimation indisponible pour le moment.'
+                        : `Environ ${esc(waitTime)} min`}</span>
+                </div>`
+            : '';
 
-        ${order.note
-            ? `<div class="note"><b>Votre note :</b> ${esc(order.note)}</div>`
-            : ''}
-    `;
+        const cancelMarkup = order.statut === 'recue'
+            ? `<div class="tracking-actions">
+                    <button class="danger" id="cancel-order" type="button">
+                        Annuler ma commande
+                    </button>
+                    <p class="muted" id="cancel-feedback" aria-live="polite"></p>
+                </div>`
+            : '';
 
-    if (['servie', 'livree', 'annulee', 'echec', 'remboursee'].includes(order.statut)) {
-        clearInterval(refreshTimer);
+        trackingBox.innerHTML = `
+            <h2>Commande ${esc(order.numero)}</h2>
+            <p class="muted">${esc(orderModeLabel(order))}</p>
+
+            ${finalMessage
+                ? `<div class="banner">${finalMessage}</div>`
+                : `<ul class="steps">${renderStatusFlow(flow, order.statut)}</ul>`}
+
+            ${waitTimeMarkup}
+            ${renderOrderLines(order)}
+
+            ${order.frais_livraison
+                ? `<div class="line"><span>Livraison</span><b>${da(order.frais_livraison)}</b></div>`
+                : ''}
+
+            <div class="line tracking-total">
+                <b>Total</b>
+                <b>${da(order.total)}</b>
+            </div>
+
+            <p class="muted tracking-payment">${paymentLabel(order)}</p>
+
+            ${order.note
+                ? `<div class="note"><b>Votre note :</b> ${esc(order.note)}</div>`
+                : ''}
+
+            ${cancelMarkup}
+        `;
+
+        trackingBox.setAttribute('aria-busy', 'false');
+        const cancelButton = trackingBox.querySelector('#cancel-order');
+        cancelButton?.addEventListener('click', () => cancelOrder(cancelButton));
+
+        finished = FINAL_STATUSES.has(order.statut);
+    } catch (error) {
+        trackingBox.setAttribute('aria-busy', 'false');
+        trackingBox.innerHTML = `
+            <h2>Commande introuvable</h2>
+            <p class="muted">${esc(error.message || 'Vérifiez le lien de suivi.')}</p>
+            <a class="btn" href="/">Retour à l'accueil</a>
+        `;
+        finished = true;
+    } finally {
+        loading = false;
+        if (!finished) {
+            refreshTimer = window.setTimeout(loadTrackingPage, 5000);
+        } else if (refreshTimer) {
+            window.clearTimeout(refreshTimer);
+        }
     }
 }
 
 loadTrackingPage();
-refreshTimer = setInterval(loadTrackingPage, 5000);
+

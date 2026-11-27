@@ -1,3 +1,4 @@
+
 import { $, da, esc, toast } from '../shared/utils.js';
 import { api } from '../shared/api.js';
 
@@ -27,6 +28,101 @@ function setCardFieldFormatting(dialog) {
     };
 }
 
+/* ------------------------------------------------------------------ */
+/*  Confirmation — waiting time                                       */
+/* ------------------------------------------------------------------ */
+
+function startConfirmationWaitTime(dialog, trackingToken) {
+    const waitTimeElement = $('#confirmation-wait-time', dialog);
+
+    let timer = null;
+    let stopped = false;
+
+    function stopPolling() {
+        stopped = true;
+
+        if (timer !== null) {
+            clearTimeout(timer);
+            timer = null;
+        }
+    }
+
+    dialog.addEventListener('close', stopPolling, { once: true });
+
+    async function refreshWaitTime() {
+        if (stopped || !dialog.open) {
+            return;
+        }
+
+        try {
+            // Retrieve the current order status.
+            const order = await api(
+                `/api/commandes/suivi/${encodeURIComponent(trackingToken)}`,
+                'GET',
+                undefined,
+                { quiet: true },
+            );
+
+            if (stopped || !dialog.open) {
+                return;
+            }
+
+            if (order.statut === 'en_preparation') {
+                // The waiting-time estimate is available during preparation.
+                const result = await api(
+                    `/api/suivi/${encodeURIComponent(trackingToken)}/temps-attente`,
+                    'GET',
+                    undefined,
+                    { quiet: true },
+                );
+
+                if (stopped || !dialog.open) {
+                    return;
+                }
+
+                if (
+                    result.visible
+                    && Number.isFinite(result.temps_attente_minutes)
+                ) {
+                    waitTimeElement.textContent =
+                        `Temps de préparation estimé : environ ${result.temps_attente_minutes} min.`;
+
+                    stopPolling();
+                    return;
+                }
+
+                waitTimeElement.textContent =
+                    'Estimation indisponible pour le moment.';
+            } else if (order.statut === 'recue') {
+                waitTimeElement.textContent =
+                    'Disponible dès que votre commande passe en préparation.';
+            } else if (order.statut === 'annulee') {
+                waitTimeElement.textContent =
+                    'Cette commande a été annulée.';
+                stopPolling();
+                return;
+            } else {
+                waitTimeElement.textContent =
+                    'La préparation de votre commande est terminée.';
+                stopPolling();
+                return;
+            }
+        } catch {
+            // Keep the confirmation screen usable if a request fails.
+        }
+
+        if (!stopped && dialog.open) {
+            timer = setTimeout(refreshWaitTime, 5000);
+        }
+    }
+
+    refreshWaitTime();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Confirmation dialog                                               */
+/* ------------------------------------------------------------------ */
+
 function showConfirmation(order) {
     const dialog = $('#confirm');
 
@@ -36,11 +132,16 @@ function showConfirmation(order) {
             <h2>Commande envoyée !</h2>
 
             <p>Votre numéro de commande : <b>${esc(order.numero)}</b></p>
+
             <p>
                 Total : <b>${da(order.total)}</b>
                 · ${order.paiement_mode === 'en_ligne'
                     ? 'Payé par carte'
                     : 'Paiement en espèces'}
+            </p>
+
+            <p id="confirmation-wait-time" class="muted">
+                Disponible dès que votre commande passe en préparation.
             </p>
 
             <p class="muted">
@@ -61,8 +162,15 @@ function showConfirmation(order) {
     `;
 
     $('#closeConfirm', dialog).onclick = () => dialog.close();
+
     dialog.showModal();
+
+    startConfirmationWaitTime(dialog, order.suivi_token);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Checkout dialog                                                   */
+/* ------------------------------------------------------------------ */
 
 export async function openCheckout({ items, onSuccess }) {
     let options;
@@ -224,9 +332,9 @@ export async function openCheckout({ items, onSuccess }) {
             <div class="recap">
                 <div><span>Sous-total</span><b>${da(subtotal)}</b></div>
 
-                <div id="r-frais" hidden>
-                    <span>Livraison</span>
-                    <b>${da(options.frais_livraison)}</b>
+                <div id="r-frais">
+                    <span>Frais de livraison</span>
+                    <b id="r-frais-montant">${da(0)}</b>
                 </div>
 
                 <div class="grand">
@@ -258,12 +366,12 @@ export async function openCheckout({ items, onSuccess }) {
         $('#g-client', dialog).hidden = mode === 'sur_place';
         $('#g-adr', dialog).hidden = mode !== 'livraison';
         $('#g-card', dialog).hidden = paymentMode !== 'en_ligne';
-        $('#r-frais', dialog).hidden = mode !== 'livraison';
 
         const deliveryFee = mode === 'livraison'
             ? options.frais_livraison
             : 0;
 
+        $('#r-frais-montant', dialog).textContent = da(deliveryFee);
         $('#r-total', dialog).textContent = da(subtotal + deliveryFee);
     };
 

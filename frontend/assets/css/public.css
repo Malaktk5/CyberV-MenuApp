@@ -604,6 +604,11 @@ dialog::backdrop {
     justify-content: space-between;
 }
 
+/* Keep hidden recap rows hidden despite the flex layout above. */
+.recap div[hidden] {
+    display: none !important;
+}
+
 .recap .grand {
     margin-top: 0.3rem;
     font-size: 1.2rem;
@@ -639,6 +644,22 @@ dialog::backdrop {
 
 .confirmation {
     text-align: center;
+}
+
+.confirmation-wait-time {
+    margin: 0.25rem 0;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    border-left: 4px solid var(--gold-d);
+    border-radius: 8px;
+    background: var(--gold-xl);
+    text-align: left;
+}
+
+.confirmation-wait-time span {
+    color: var(--ink);
 }
 
 .confirmation-actions {
