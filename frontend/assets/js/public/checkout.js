@@ -1,9 +1,6 @@
 import { $, da, esc, toast } from '../shared/utils.js';
 import { api } from '../shared/api.js';
 
-const CONFIRMATION_STATUS_POLL_MS = 5000;
-let confirmationPollTimer = null;
-
 const MODES = [
     ['sur_place', 'Sur place'],
     ['a_emporter', 'À emporter'],
@@ -30,88 +27,8 @@ function setCardFieldFormatting(dialog) {
     };
 }
 
-function stopConfirmationWaitTimePolling() {
-    if (confirmationPollTimer !== null) {
-        window.clearTimeout(confirmationPollTimer);
-        confirmationPollTimer = null;
-    }
-}
-
-function startConfirmationWaitTimePolling(order, dialog) {
-    stopConfirmationWaitTimePolling();
-
-    const waitTimeBox = $('#confirmation-wait-time', dialog);
-    if (!waitTimeBox || !order.suivi_token) {
-        return;
-    }
-
-    let stopped = false;
-
-    const stop = () => {
-        stopped = true;
-        stopConfirmationWaitTimePolling();
-    };
-
-    dialog.addEventListener('close', stop, { once: true });
-
-    const checkPreparationStatus = async () => {
-        if (stopped || !dialog.open) {
-            return;
-        }
-
-        try {
-            // The estimate must remain hidden while the order is only "reçue".
-            const currentOrder = await api(
-                `/api/commandes/suivi/${encodeURIComponent(order.suivi_token)}`,
-                'GET',
-                undefined,
-                { quiet: true },
-            );
-
-            if (currentOrder.statut === 'en_preparation') {
-                const estimate = await api(
-                    `/api/suivi/${encodeURIComponent(order.suivi_token)}/temps-attente`,
-                    'GET',
-                    undefined,
-                    { quiet: true },
-                );
-
-                if (
-                    estimate?.visible
-                    && Number.isFinite(Number(estimate.temps_attente_minutes))
-                ) {
-                    const value = waitTimeBox.querySelector('span');
-                    if (value) {
-                        const minutes = Number(estimate.temps_attente_minutes);
-                        value.textContent = minutes === 1
-                            ? 'Environ 1 minute'
-                            : `Environ ${minutes} minutes`;
-                    }
-                    return;
-                }
-            } else if (currentOrder.statut !== 'recue') {
-                // The order has moved past the preparation stage (or was cancelled).
-                return;
-            }
-        } catch {
-            // A temporary network error should not break the confirmation dialog.
-            // The next poll will retry while the dialog remains open.
-        }
-
-        if (!stopped && dialog.open) {
-            confirmationPollTimer = window.setTimeout(
-                checkPreparationStatus,
-                CONFIRMATION_STATUS_POLL_MS,
-            );
-        }
-    };
-
-    checkPreparationStatus();
-}
-
 function showConfirmation(order) {
     const dialog = $('#confirm');
-    stopConfirmationWaitTimePolling();
 
     dialog.innerHTML = `
         <div class="mform confirmation">
@@ -125,11 +42,6 @@ function showConfirmation(order) {
                     ? 'Payé par carte'
                     : 'Paiement en espèces'}
             </p>
-
-            <div class="confirmation-wait-time" id="confirmation-wait-time" role="status" aria-live="polite">
-                <b>Temps d'attente estimé</b>
-                <span>Disponible dès que votre commande passe en préparation.</span>
-            </div>
 
             <p class="muted">
                 ${order.mode === 'livraison'
@@ -150,7 +62,6 @@ function showConfirmation(order) {
 
     $('#closeConfirm', dialog).onclick = () => dialog.close();
     dialog.showModal();
-    startConfirmationWaitTimePolling(order, dialog);
 }
 
 export async function openCheckout({ items, onSuccess }) {
@@ -313,9 +224,9 @@ export async function openCheckout({ items, onSuccess }) {
             <div class="recap">
                 <div><span>Sous-total</span><b>${da(subtotal)}</b></div>
 
-                <div id="r-frais" hidden>
-                    <span>Livraison</span>
-                    <b>${da(options.frais_livraison)}</b>
+                <div id="r-frais">
+                    <span>Frais de livraison</span>
+                    <b id="r-frais-montant">${da(0)}</b>
                 </div>
 
                 <div class="grand">
@@ -347,12 +258,12 @@ export async function openCheckout({ items, onSuccess }) {
         $('#g-client', dialog).hidden = mode === 'sur_place';
         $('#g-adr', dialog).hidden = mode !== 'livraison';
         $('#g-card', dialog).hidden = paymentMode !== 'en_ligne';
-        $('#r-frais', dialog).hidden = mode !== 'livraison';
 
         const deliveryFee = mode === 'livraison'
             ? options.frais_livraison
             : 0;
 
+        $('#r-frais-montant', dialog).textContent = da(deliveryFee);
         $('#r-total', dialog).textContent = da(subtotal + deliveryFee);
     };
 
