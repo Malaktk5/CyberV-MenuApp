@@ -86,3 +86,32 @@
 .tracking-payment {
     margin: 0.6rem 0 0;
 }
+
+.wait-time {
+    margin: 1rem 0;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    border-left: 4px solid var(--gold-d);
+    border-radius: 8px;
+    background: var(--gold-xl);
+}
+
+.wait-time span {
+    color: var(--ink);
+}
+
+.tracking-actions {
+    margin-top: 1.2rem;
+}
+
+.tracking-actions button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+#cancel-feedback {
+    margin: 0.5rem 0 0;
+    color: var(--danger);
+}

@@ -641,6 +641,22 @@ dialog::backdrop {
     text-align: center;
 }
 
+.confirmation-wait-time {
+    margin: 0.25rem 0;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    border-left: 4px solid var(--gold-d);
+    border-radius: 8px;
+    background: var(--gold-xl);
+    text-align: left;
+}
+
+.confirmation-wait-time span {
+    color: var(--ink);
+}
+
 .confirmation-actions {
     justify-content: center;
 }
