@@ -604,6 +604,11 @@ dialog::backdrop {
     justify-content: space-between;
 }
 
+/* Keep hidden recap rows hidden despite the flex layout above. */
+.recap div[hidden] {
+    display: none !important;
+}
+
 .recap .grand {
     margin-top: 0.3rem;
     font-size: 1.2rem;
