@@ -145,27 +145,61 @@ Les tests d’intégration liés aux boissons utilisent la catégorie `Boissons`
 
 ## 6. Exécution des tests
 
-Depuis la racine du dépôt, activez l’environnement virtuel du projet, vérifiez que la base de données PostgreSQL de test est démarrée et initialisée, puis configurez la même variable `DATABASE_URL` que celle utilisée par les autres tests d’intégration du projet.
-
-Pour exécuter uniquement les tests F1 :
+Depuis la racine du dépôt, activez l'environnement virtuel du projet et assurez-vous que les services Docker sont démarrés :
 
 ```bash
-python -m pytest tests/test_suivi.py -v
+docker compose up -d
 ```
 
-Pour exécuter toute la suite de tests du backend :
+La base de données PostgreSQL doit être démarrée et initialisée. Vérifiez son état avec :
 
 ```bash
-python -m pytest -q
+docker compose ps
 ```
 
-Pour vérifier la syntaxe Python :
+### Configuration de la connexion à PostgreSQL
+
+Le fichier `.env` doit contenir les variables de connexion utilisées par Docker Compose :
+
+```env
+POSTGRES_DB=yummy_db
+POSTGRES_USER=yummy_user
+POSTGRES_PASSWORD=votre_mot_de_passe
+```
+
+Remplacez les valeurs par celles réellement configurées dans votre projet. Ne publiez jamais vos identifiants dans le dépôt Git.
+
+À noter :
+- Depuis les conteneurs Docker, PostgreSQL est accessible via `db:5432`.
+- Depuis la machine hôte, PostgreSQL est accessible via `localhost:5433`.
+
+### Exécution des tests F1
+
+Pour exécuter uniquement les tests F1 depuis la machine hôte :
 
 ```bash
-python -m compileall -q app/routers/suivi.py tests/test_suivi.py
+set -a
+source .env
+set +a
+
+DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5433/${POSTGRES_DB}" python3 -m pytest tests/test_suivi.py -v
 ```
 
-Les tests nécessitent la base de données du projet. Une simple vérification statique de la syntaxe ne permet pas de confirmer le bon fonctionnement avec la base de données.
+### Exécution de toute la suite de tests du backend
+
+```bash
+python3 -m pytest -q
+```
+
+Veillez à configurer `DATABASE_URL` de la même manière pour toute la suite si les tests sont exécutés depuis la machine hôte.
+
+### Vérification de la syntaxe Python
+
+```bash
+python3 -m compileall -q app/routers/suivi.py tests/test_suivi.py
+```
+
+**Remarque :** Les tests d'intégration nécessitent une connexion à la base de données PostgreSQL. Une simple vérification statique de la syntaxe ne permet pas de confirmer leur bon fonctionnement.
 
 ## 7. Fichiers inclus dans F1
 
