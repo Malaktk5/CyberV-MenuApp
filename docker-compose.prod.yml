@@ -1,0 +1,67 @@
+services:
+  app:
+    image: ${IMAGE_NAME:-ghcr.io/malaktk5/cyberv-menuapp}:${IMAGE_TAG:-latest}
+    container_name: yummy_app_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-yummy_db}
+      POSTGRES_USER: ${POSTGRES_USER:-yummy_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yummy_password}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-yummy_user}:${POSTGRES_PASSWORD:-yummy_password}@db:5432/${POSTGRES_DB:-yummy_db}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+    volumes:
+      - uploads_data:/app/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    container_name: yummy_postgres_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-yummy_db}
+      POSTGRES_USER: ${POSTGRES_USER:-yummy_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yummy_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yummy_user} -d ${POSTGRES_DB:-yummy_db}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: yummy_redis_prod
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: yummy_nginx_prod
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  uploads_data:
