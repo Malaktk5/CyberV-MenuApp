@@ -61,3 +61,40 @@ def test_login_page_sends_each_role_to_its_screen(anon):
 
     staff_js = anon.get("/assets/js/shared/staff.js").text
     assert "ROLE_HOME" in staff_js
+
+
+def test_cuisine_lists_active_orders_oldest_first(login_as, make_order):
+    cook = login_as("cuisinier")
+    older = make_order(statut="recue", mode="sur_place", created_at="2026-01-01 10:00:00+00")
+    newer = make_order(statut="en_preparation", mode="a_emporter", created_at="2026-01-01 10:05:00+00")
+    done = make_order(statut="prete", mode="sur_place", created_at="2026-01-01 09:50:00+00")
+
+    r = cook.get("/api/cuisine/commandes")
+    assert r.status_code == 200
+    ids = [o["id"] for o in r.json()]
+    assert older["id"] in ids and newer["id"] in ids
+    assert done["id"] not in ids
+    assert ids.index(older["id"]) < ids.index(newer["id"])
+
+
+def test_cuisine_transitions_order_to_en_preparation_and_prete(login_as, make_order, get_order):
+    cook = login_as("cuisinier")
+    order = make_order(statut="recue", mode="sur_place")
+
+    r1 = cook.post(f"/api/cuisine/commandes/{order['id']}/statut", json={"statut": "en_preparation"})
+    assert r1.status_code == 200
+    assert get_order(order["id"])["statut"] == "en_preparation"
+
+    r2 = cook.post(f"/api/cuisine/commandes/{order['id']}/statut", json={"statut": "prete"})
+    assert r2.status_code == 200
+    assert get_order(order["id"])["statut"] == "prete"
+
+
+def test_cuisine_rejects_invalid_status_or_wrong_role(login_as, make_order):
+    order = make_order(statut="recue", mode="sur_place")
+    waiter = login_as("serveur")
+    assert waiter.get("/api/cuisine/commandes").status_code == 403
+
+    cook = login_as("cuisinier")
+    bad = cook.post(f"/api/cuisine/commandes/{order['id']}/statut", json={"statut": "terminee"})
+    assert bad.status_code == 422
